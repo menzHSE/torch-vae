@@ -32,9 +32,16 @@ def save_image(img1, img2, fname):
     img1_data = (img1.detach().cpu().numpy() * 255).astype(np.uint8)
     img2_data = (img2.detach().cpu().numpy() * 255).astype(np.uint8)
 
-    # Remove any extra dimensions (like channels in grayscale images)
-    img1_data = img1_data.squeeze()
-    img2_data = img2_data.squeeze()
+    # Reshape if the images have a channel dimension
+    if img1_data.ndim == 3 and img1_data.shape[0] == 1:  # Grayscale image
+        img1_data = img1_data.squeeze(0)  # remove channel dimension
+    elif img1_data.ndim == 3 and img1_data.shape[0] == 3:  # Color image
+        img1_data = img1_data.transpose(1, 2, 0)  # C, H, W to H, W, C
+
+    if img2_data.ndim == 3 and img2_data.shape[0] == 1:  # Grayscale image
+        img2_data = img2_data.squeeze(0)  # remove channel dimension
+    elif img2_data.ndim == 3 and img2_data.shape[0] == 3:  # Color image
+        img2_data = img2_data.transpose(1, 2, 0)  # C, H, W to H, W, C
 
     # Convert numpy arrays to Pillow images
     pimg1 = Image.fromarray(img1_data)
@@ -51,7 +58,6 @@ def save_image(img1, img2, fname):
 
     # Save the combined image
     combined_img.save(fname)
-
 
 def reconstruct(device, model_fname, dataset_name, num_latent_dims):
        

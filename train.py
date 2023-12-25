@@ -1,6 +1,6 @@
 # Markus Enzweiler - markus.enzweiler@hs-esslingen.de
 
-# This is a convolutional variational autoencoder for MNIST in PyTorch
+# This is a convolutional variational autoencoder for in PyTorch
 
 import argparse
 import time
@@ -18,7 +18,7 @@ import trainer
 import device
 
 
-# Train the VAE
+# Train the CNN
 def train(device, batch_size, num_epochs, learning_rate, dataset_name, num_latent_dims):
 
     # get the data

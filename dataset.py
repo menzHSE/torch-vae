@@ -37,12 +37,12 @@ if __name__ == "__main__":
     tr_loader, test_loader, classes = mnist(batch_size=batch_size)
 
     images, labels = next(iter(tr_loader)) 
-    assert images.shape == (batch_size, 1, 28, 28), "Wrong training set size"
+    assert images.shape == (batch_size, 1, 32, 32), "Wrong training set size"
     assert labels.shape == (batch_size,), "Wrong training set size"
 
 
     images, labels = next(iter(test_loader))
-    assert images.shape == (batch_size, 1, 28, 28), "Wrong training set size"
+    assert images.shape == (batch_size, 1, 32, 32), "Wrong training set size"
     assert labels.shape == (batch_size,), "Wrong training set size"
    
     print(classes)
