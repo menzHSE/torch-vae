@@ -129,8 +129,9 @@ def vae_loss_fn(x, x_recon, kl_div):
 
     # Reconstruction loss
     recon_loss = F.mse_loss(x_recon, x, reduction='sum')
-    
+
     # Total loss
     loss = recon_loss + kl_div
+    #print(f"Loss: {loss.item():.2f} | Recon loss: {recon_loss.item():.2f} | KL div: {kl_div.item():.2f}", end="\r", flush=True)
     return loss
 

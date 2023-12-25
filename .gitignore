@@ -168,3 +168,4 @@ models
 orig_img
 recon_img
 torch-mnist-vae.code-workspace
+reconstructions

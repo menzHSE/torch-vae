@@ -2,6 +2,7 @@
 
 import argparse
 import numpy as np
+import os
 
 import torch
 import torch.nn as nn
@@ -14,13 +15,42 @@ import device
 
 from PIL import Image
 
-def save_image(img, fname):
-    img_data = (img.detach().cpu().numpy() * 255).astype(np.uint8)
-    img_data = img_data.squeeze()
+def ensure_folder_exists(img_path):
+    # Extract the directory path from the file path
+    dir_path = os.path.dirname(img_path)
 
-    # Save the image using Pillow
-    pimg = Image.fromarray(img_data)
-    pimg.save(fname)
+    # Check if the directory path is not empty
+    if dir_path:
+        # Check if the directory exists, and create it if it does not
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path, exist_ok=True)
+
+    return dir_path  # Optionally return the directory path
+
+def save_image(img1, img2, fname):
+    # Convert PyTorch tensors to numpy arrays and scale to 0-255
+    img1_data = (img1.detach().cpu().numpy() * 255).astype(np.uint8)
+    img2_data = (img2.detach().cpu().numpy() * 255).astype(np.uint8)
+
+    # Remove any extra dimensions (like channels in grayscale images)
+    img1_data = img1_data.squeeze()
+    img2_data = img2_data.squeeze()
+
+    # Convert numpy arrays to Pillow images
+    pimg1 = Image.fromarray(img1_data)
+    pimg2 = Image.fromarray(img2_data)
+
+    # Concatenate images horizontally
+    total_width = pimg1.width + pimg2.width
+    max_height = max(pimg1.height, pimg2.height)
+    combined_img = Image.new('RGB', (total_width, max_height))
+
+    # Paste the images side by side
+    combined_img.paste(pimg1, (0, 0))
+    combined_img.paste(pimg2, (pimg1.width, 0))
+
+    # Save the combined image
+    combined_img.save(fname)
 
 
 def reconstruct(device, model_fname, dataset_name, num_latent_dims):
@@ -42,8 +72,9 @@ def reconstruct(device, model_fname, dataset_name, num_latent_dims):
     # loop over data and reconstruct
     with torch.no_grad():
         img_count = 0
-        img_path = "./orig_img/img_"
-        recon_img_path = "./recon_img/img_recon_"
+        img_path = f"./reconstructions/reconstruct_{num_latent_dims:05d}_latent_dims/img_"
+        ensure_folder_exists(img_path)
+        
         for i, data in enumerate(test_loader, 0):        
                 # get the testing data and push the data to the device we are using       
                 images = data[0].to(device)
@@ -55,11 +86,9 @@ def reconstruct(device, model_fname, dataset_name, num_latent_dims):
                 for j in range(images.shape[0]):
                      # filenames for image and reconstructed image
 
-                    img_fname       = f"{img_path}      {(img_count+j):08d}.png"
-                    recon_img_fname = f"{recon_img_path}{(img_count+j):08d}.png"
-                   
-                    save_image(images[j],       img_fname)
-                    save_image(images_recon[j], recon_img_fname)
+                    img_fname = f"{img_path}{(img_count+j):08d}.png"
+                    save_image(images[j],  images_recon[j], img_fname)
+
                 
                 # print progress
                 print(f"Reconstructed {img_count+images.shape[0]} images", end="\r", flush=True)
