@@ -56,8 +56,8 @@ if __name__ == "__main__":
     parser.add_argument("--batchsize", type=int, default=128, help="Batch size for training")
     parser.add_argument("--epochs", type=int, default=30, help="Number of training epochs")
     parser.add_argument("--lr", type=float, default=3e-4, help="Learning rate")
-    parser.add_argument("--dataset", type=str, choices=['mnist', 'cifar-10', 'cifar-100'], default='mnist', 
-                        help="Select the dataset to use (mnist, cifar-10, cifar-100)")
+    parser.add_argument("--dataset", type=str, choices=['mnist', 'cifar-10', 'cifar-100', 'celeb-a'], default='mnist', 
+                        help="Select the dataset to use (mnist, cifar-10, cifar-100, celeb-a)")
     parser.add_argument("--latent_dims", type=int, required=True, help="Number of latent dimensions (positive integer)")
 
 

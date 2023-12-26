@@ -5,6 +5,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 
+import utils
+
 
 class Encoder(nn.Module):
     """
@@ -28,14 +30,24 @@ class Encoder(nn.Module):
         self.device = device
 
         # we assume B x #img_channels x 32 x 32 input 
+        # Todo: add input shape attribute to the model to make it more flexible
 
         # layers
         # Output: 16x16x16
-        self.conv1 = nn.Conv2d   (num_img_channels, 16, 3, stride=2, padding=1) 
+        self.conv1 = nn.Conv2d   (num_img_channels,  64, 3, stride=2, padding=1) 
         # Output: 32x8x8
-        self.conv2 = nn.Conv2d   (16,               32, 3, stride=2, padding=1) 
+        self.conv2 = nn.Conv2d   (64,               128, 3, stride=2, padding=1) 
         # Output: 64x4x4
-        self.conv3 = nn.Conv2d   (32,               64, 3, stride=2, padding=1) 
+        self.conv3 = nn.Conv2d   (128,              256, 3, stride=2, padding=1) 
+        
+        # Shortcuts
+        self.shortcut2 = nn.Conv2d(64,  128, 1, stride=2, padding=0)
+        self.shortcut3 = nn.Conv2d(128, 256, 1, stride=2, padding=0)
+
+        # Batch Normalizations
+        self.bn1 = nn.BatchNorm2d(64)
+        self.bn2 = nn.BatchNorm2d(128)
+        self.bn3 = nn.BatchNorm2d(256)
                        
 
         # linear mappings to mean and standard deviation
@@ -44,13 +56,16 @@ class Encoder(nn.Module):
         # standard deviation must be positive and the exp()
         # in forward ensures this. It might also be numerically
         # more stable.
-        self.proj_mu      = nn.Linear(64*4*4, num_latent_dims)
-        self.proj_log_var = nn.Linear(64*4*4, num_latent_dims) 
+        self.proj_mu      = nn.Linear(256*4*4, num_latent_dims)
+        self.proj_log_var = nn.Linear(256*4*4, num_latent_dims) 
         
     def forward(self, x):
-        x = F.leaky_relu(self.conv1(x))
-        x = F.leaky_relu(self.conv2(x))
-        x = F.leaky_relu(self.conv3(x))
+
+        # poor man's ResNet -> skip connections
+        
+        x =                     F.leaky_relu(self.bn1(self.conv1(x)))
+        x = self.shortcut2(x) + F.leaky_relu(self.bn2(self.conv2(x)))
+        x = self.shortcut3(x) + F.leaky_relu(self.bn3(self.conv3(x)))
         x = torch.flatten(x, 1) # flatten all dimensions except batch
 
         mu     = self.proj_mu(x)
@@ -77,23 +92,32 @@ class Decoder(nn.Module):
         self.num_img_channels = num_img_channels
 
         # Output: 64x4x4
-        self.lin1  = nn.Linear(num_latent_dims, 64*4*4) 
+        self.lin1  = nn.Linear(num_latent_dims, 256*4*4) 
         # Output: 32x8x8
-        self.conv1 = nn.ConvTranspose2d(64, 32,               3, stride=2, padding=1, output_padding=1)  
+        self.conv1 = nn.ConvTranspose2d(256,  128,              3, stride=2, padding=1, output_padding=1)  
         # Output: 16x16x16
-        self.conv2 = nn.ConvTranspose2d(32,  16,               3, stride=2, padding=1, output_padding=1)  
+        self.conv2 = nn.ConvTranspose2d(128,  64,               3, stride=2, padding=1, output_padding=1)  
         # Output: #img_channelsx32x32
-        self.conv3 = nn.ConvTranspose2d(16,  num_img_channels, 3, stride=2, padding=1, output_padding=1)  
-        
+        self.conv3 = nn.ConvTranspose2d( 64,  num_img_channels, 3, stride=2, padding=1, output_padding=1)  
+
+         # Shortcuts
+        self.shortcut1 = nn.ConvTranspose2d(256, 128, 1, stride=2, padding=0, output_padding=1)
+        self.shortcut2 = nn.ConvTranspose2d(128, 64, 1, stride=2, padding=0, output_padding=1)
+
+         # Batch Normalizations
+        self.bn1 = nn.BatchNorm2d(128)
+        self.bn2 = nn.BatchNorm2d(64)
+     
 
     def forward(self, z):
         # unflatten the latent vector
-        z = self.lin1(z)
-        z = z.view(-1, 64, 4, 4)
-        z = F.leaky_relu(self.conv1(z))
-        z = F.leaky_relu(self.conv2(z))
-        z = F.sigmoid(self.conv3(z)) # sigmoid to ensure pixel values are in [0,1]
-        return z
+        x = self.lin1(z)
+        x = x.view(-1, 256, 4, 4)
+        # poor man's ResNet -> skip connections
+        x = self.shortcut1(x) + F.leaky_relu(self.bn1(self.conv1(x)))
+        x = self.shortcut2(x) + F.leaky_relu(self.bn2(self.conv2(x)))
+        x =                     F.sigmoid(            self.conv3(x)) # sigmoid to ensure pixel values are in [0,1]
+        return x
         
 
         
@@ -118,15 +142,8 @@ class VAE(nn.Module):
     
  
     def save(self, fname):
-        # Extract the directory path from the file name
-        dir_path = os.path.dirname(fname)
 
-        # Check if the directory path is not empty
-        if dir_path:
-            # Check if the directory exists, and create it if it does not
-            if not os.path.exists(dir_path):
-                os.makedirs(dir_path, exist_ok=True)
-
+        utils.ensure_folder_exists(fname)
         # save the model
         torch.save(self.state_dict(), fname)
 

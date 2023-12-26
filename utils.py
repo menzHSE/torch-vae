@@ -47,9 +47,9 @@ def combine_and_save_image(img1_data, img2_data, fname):
     combined_img.save(fname)
     
 
-def ensure_folder_exists(img_path):
-    # Extract the directory path from the file path
-    dir_path = os.path.dirname(img_path)
+def ensure_folder_exists(path):
+    # Extract the directory path from the (file) path
+    dir_path = os.path.dirname(path)
 
     # Check if the directory path is not empty
     if dir_path:
