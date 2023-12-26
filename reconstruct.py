@@ -23,7 +23,7 @@ def reconstruct(device, model_fname, dataset_name, num_latent_dims, rec_testdata
     batch_size = 32
 
     # Image size
-    img_size = (32, 32)
+    img_size = (64, 64)
 
     # get the data
     train_loader, test_loader, _ , num_img_channels = dataset.get_loaders(dataset_name, img_size, batch_size)

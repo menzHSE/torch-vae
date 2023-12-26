@@ -23,7 +23,7 @@ import loss
 def train(device, batch_size, num_epochs, learning_rate, dataset_name, num_latent_dims):
 
     # Image size
-    img_size = (32, 32)
+    img_size = (64, 64)
 
     # get the data
     train_loader, _, _, num_img_channels = dataset.get_loaders(dataset_name, img_size, batch_size)
@@ -32,7 +32,7 @@ def train(device, batch_size, num_epochs, learning_rate, dataset_name, num_laten
     vae = model.VAE(num_latent_dims, num_img_channels, device=device)
 
     # print summary and correctly flush the stream
-    model_stats = summary(vae, input_size=(1, num_img_channels, 32, 32), row_settings=["var_names"])
+    model_stats = summary(vae, input_size=(1, num_img_channels, img_size[0], img_size[1]), row_settings=["var_names"])
     print("", flush=True)
     time.sleep(1)
 
@@ -53,8 +53,8 @@ if __name__ == "__main__":
 
     parser.add_argument("--cpu", action="store_true", help="Use CPU instead of GPU (cuda/mps) acceleration")
     parser.add_argument("--seed", type=int, default=0, help="Random seed")
-    parser.add_argument("--batchsize", type=int, default=128, help="Batch size for training")
-    parser.add_argument("--epochs", type=int, default=30, help="Number of training epochs")
+    parser.add_argument("--batchsize", type=int, default=32, help="Batch size for training")
+    parser.add_argument("--epochs", type=int, default=100, help="Number of training epochs")
     parser.add_argument("--lr", type=float, default=3e-4, help="Learning rate")
     parser.add_argument("--dataset", type=str, choices=['mnist', 'cifar-10', 'cifar-100', 'celeb-a'], default='mnist', 
                         help="Select the dataset to use (mnist, cifar-10, cifar-100, celeb-a)")

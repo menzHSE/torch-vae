@@ -64,7 +64,7 @@ def torchvision_load(dataset_name, batch_size, load_fn, img_size=(32,32), root="
 if __name__ == "__main__":
 
     batch_size = 32
-    img_size=(32,32)
+    img_size = (64, 64)
 
     tr_loader, test_loader, classes_list, num_img_channels = get_loaders("mnist", img_size=img_size, batch_size=batch_size)
 

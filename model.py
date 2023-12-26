@@ -29,15 +29,15 @@ class Encoder(nn.Module):
         self.num_img_channels = num_img_channels
         self.device = device
 
-        # we assume B x #img_channels x 32 x 32 input 
+        # we assume B x #img_channels x 64 x 64 input 
         # Todo: add input shape attribute to the model to make it more flexible
 
         # layers
-        # Output: 16x16x16
+        # Output: 64x32x32
         self.conv1 = nn.Conv2d   (num_img_channels,  64, 3, stride=2, padding=1) 
-        # Output: 32x8x8
+        # Output: 128x16x16
         self.conv2 = nn.Conv2d   (64,               128, 3, stride=2, padding=1) 
-        # Output: 64x4x4
+        # Output: 256x8x8
         self.conv3 = nn.Conv2d   (128,              256, 3, stride=2, padding=1) 
         
         # Shortcuts
@@ -56,8 +56,8 @@ class Encoder(nn.Module):
         # standard deviation must be positive and the exp()
         # in forward ensures this. It might also be numerically
         # more stable.
-        self.proj_mu      = nn.Linear(256*4*4, num_latent_dims)
-        self.proj_log_var = nn.Linear(256*4*4, num_latent_dims) 
+        self.proj_mu      = nn.Linear(256 * 8 * 8, num_latent_dims)
+        self.proj_log_var = nn.Linear(256 * 8 * 8, num_latent_dims) 
         
     def forward(self, x):
 
@@ -91,13 +91,13 @@ class Decoder(nn.Module):
         self.num_latent_dims = num_latent_dims
         self.num_img_channels = num_img_channels
 
-        # Output: 64x4x4
-        self.lin1  = nn.Linear(num_latent_dims, 256*4*4) 
-        # Output: 32x8x8
+        # Output: 256x8x8
+        self.lin1  = nn.Linear(num_latent_dims, 256 * 8 * 8) 
+        # Output: 128x16x16
         self.conv1 = nn.ConvTranspose2d(256,  128,              3, stride=2, padding=1, output_padding=1)  
-        # Output: 16x16x16
+        # Output: 64x32x32
         self.conv2 = nn.ConvTranspose2d(128,  64,               3, stride=2, padding=1, output_padding=1)  
-        # Output: #img_channelsx32x32
+        # Output: #img_channels x 64x64
         self.conv3 = nn.ConvTranspose2d( 64,  num_img_channels, 3, stride=2, padding=1, output_padding=1)  
 
          # Shortcuts
@@ -112,7 +112,7 @@ class Decoder(nn.Module):
     def forward(self, z):
         # unflatten the latent vector
         x = self.lin1(z)
-        x = x.view(-1, 256, 4, 4)
+        x = x.view(-1, 256, 8, 8)
         # poor man's ResNet -> skip connections
         x = self.shortcut1(x) + F.leaky_relu(self.bn1(self.conv1(x)))
         x = self.shortcut2(x) + F.leaky_relu(self.bn2(self.conv2(x)))
