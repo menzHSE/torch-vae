@@ -53,12 +53,9 @@ class Encoder(nn.Module):
         x = F.leaky_relu(self.conv3(x))
         x = torch.flatten(x, 1) # flatten all dimensions except batch
 
-        mu    = self.proj_mu(x)
+        mu     = self.proj_mu(x)
         logvar = self.proj_log_var(x)
-        sigma = torch.exp(logvar)
-
-        mu = self.proj_mu(x)
-        sigma = torch.exp(logvar * 0.5)  # Ensure this is the std deviation, not variance
+        sigma  = torch.exp(logvar * 0.5)  # Ensure this is the std deviation, not variance
 
         # Generate a tensor of random values from a normal distribution
         eps = torch.randn_like(sigma) 
@@ -100,7 +97,6 @@ class Decoder(nn.Module):
         
 
         
-
 class VAE(nn.Module):
     """A convolutional Variational Autoencoder """
 
@@ -108,6 +104,7 @@ class VAE(nn.Module):
         super().__init__()
         self.num_latent_dims = num_latent_dims
         self.num_img_channels = num_img_channels
+        self.device=device
         self.encoder = Encoder(num_latent_dims, num_img_channels, device)
         self.decoder = Decoder(num_latent_dims, num_img_channels)
         self.kl_div  = 0
@@ -134,19 +131,5 @@ class VAE(nn.Module):
         torch.save(self.state_dict(), fname)
 
     def load(self, fname):
-        self.load_state_dict(torch.load(fname))
+        self.load_state_dict(torch.load(fname, map_location=self.device))
         self.eval()
-
-def vae_loss_fn(x, x_recon, kl_div):
-    """The loss function for the VAE. It is a combination of the reconstruction loss
-    and the KL divergence between the latent distribution and the standard normal distribution.
-    """
-
-    # Reconstruction loss
-    recon_loss = F.mse_loss(x_recon, x, reduction='sum')
-
-    # Total loss
-    loss = recon_loss + kl_div
-    print(f"Loss: {loss.item():.2f} | Recon loss: {recon_loss.item():.2f} | KL div: {kl_div.item():.2f}", end="\r", flush=True)
-    return loss
-
