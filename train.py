@@ -16,30 +16,34 @@ import dataset
 import model
 import trainer
 import device
+import loss
 
 
 # Train the CNN
 def train(device, batch_size, num_epochs, learning_rate, dataset_name, num_latent_dims):
 
+    # Image size
+    img_size = (32, 32)
+
     # get the data
-    train_loader, _, _ = dataset.mnist(batch_size)
+    train_loader, _, _, num_img_channels = dataset.get_loaders(dataset_name, img_size, batch_size)
 
     # Instantiate the VAE
-    vae = model.VAE(num_latent_dims, device=device)
+    vae = model.VAE(num_latent_dims, num_img_channels, device=device)
 
     # print summary and correctly flush the stream
-    model_stats = summary(vae, input_size=(1, 1, 32, 32), row_settings=["var_names"])
+    model_stats = summary(vae, input_size=(1, num_img_channels, 32, 32), row_settings=["var_names"])
     print("", flush=True)
     time.sleep(1)
 
     # Loss
-    loss_fn = model.vae_loss_fn
+    loss_fn = loss.mse_kl_loss
 
     # Optimizer
     optimizer = optim.AdamW(vae.parameters(), lr=learning_rate)
 
     # Train the network
-    fname_save_every_epoch = f"models/vae_latent_{vae.num_latent_dims:05d}"
+    fname_save_every_epoch = f"models/{dataset_name}/vae_{vae.num_latent_dims:04d}_latent_dims"
     trainer_obj = trainer.Trainer(vae, loss_fn, optimizer, device, fname_save_every_epoch, log_level=logging.INFO)
     trainer_obj.train(train_loader, None, num_epochs)
 
@@ -52,8 +56,8 @@ if __name__ == "__main__":
     parser.add_argument("--batchsize", type=int, default=128, help="Batch size for training")
     parser.add_argument("--epochs", type=int, default=30, help="Number of training epochs")
     parser.add_argument("--lr", type=float, default=3e-4, help="Learning rate")
-    parser.add_argument("--dataset", type=str, choices=['mnist'], default='mnist', 
-                        help="Select the dataset to use (mnist)")
+    parser.add_argument("--dataset", type=str, choices=['mnist', 'cifar-10', 'cifar-100'], default='mnist', 
+                        help="Select the dataset to use (mnist, cifar-10, cifar-100)")
     parser.add_argument("--latent_dims", type=int, required=True, help="Number of latent dimensions (positive integer)")
 
 

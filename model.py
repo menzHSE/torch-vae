@@ -3,6 +3,7 @@ import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.autograd import Variable
 
 
 class Encoder(nn.Module):
@@ -20,22 +21,22 @@ class Encoder(nn.Module):
     between the two distributions as this auxiliary loss.     
     """
 
-    def __init__(self, num_latent_dims, device):
+    def __init__(self, num_latent_dims, num_img_channels, device):
         super().__init__()
         self.num_latent_dims = num_latent_dims
+        self.num_img_channels = num_img_channels
         self.device = device
 
-        # we assume Bx1x32x32 input 
+        # we assume B x #img_channels x 32 x 32 input 
 
         # layers
-        self.conv1 = nn.Conv2d   (1,        32, 3, stride=2, padding=1) # Output: 32x16x16
-        self.conv2 = nn.Conv2d   (32,       64, 3, stride=2, padding=1) # Output: 64x8x8
-        self.conv3 = nn.Conv2d   (64,      128, 3, stride=2, padding=1) # Output: 128x4x4
-        # assuming 1x28x28 input image we get 128x4x4 of the conv layer stack     
-        
-        # normal distribution and KL divergence
-        self.N      = torch.distributions.Normal(0, 1)  
-        self.kl_div = 0  
+        # Output: 16x16x16
+        self.conv1 = nn.Conv2d   (num_img_channels, 16, 3, stride=2, padding=1) 
+        # Output: 32x8x8
+        self.conv2 = nn.Conv2d   (16,               32, 3, stride=2, padding=1) 
+        # Output: 64x4x4
+        self.conv3 = nn.Conv2d   (32,               64, 3, stride=2, padding=1) 
+                       
 
         # linear mappings to mean and standard deviation
         # std-dev is directly outputted as but rather as a 
@@ -43,8 +44,8 @@ class Encoder(nn.Module):
         # standard deviation must be positive and the exp()
         # in forward ensures this. It might also be numerically
         # more stable.
-        self.proj_mean  = nn.Linear(128*4*4, num_latent_dims)
-        self.proj_sigma = nn.Linear(128*4*4, num_latent_dims) 
+        self.proj_mu      = nn.Linear(64*4*4, num_latent_dims)
+        self.proj_log_var = nn.Linear(64*4*4, num_latent_dims) 
         
     def forward(self, x):
         x = F.leaky_relu(self.conv1(x))
@@ -52,36 +53,49 @@ class Encoder(nn.Module):
         x = F.leaky_relu(self.conv3(x))
         x = torch.flatten(x, 1) # flatten all dimensions except batch
 
-        mu    = self.proj_mean(x)
-        sigma = torch.exp(self.proj_sigma(x))
+        mu    = self.proj_mu(x)
+        logvar = self.proj_log_var(x)
+        sigma = torch.exp(logvar)
 
-        # sample from the distribution
-        sampled_z = self.N.sample(mu.shape).to(mu.device)
-        z = mu + sigma * sampled_z
+        mu = self.proj_mu(x)
+        sigma = torch.exp(logvar * 0.5)  # Ensure this is the std deviation, not variance
+
+        # Generate a tensor of random values from a normal distribution
+        eps = torch.randn_like(sigma) 
+
+        # Perform the reparametrization step
+        z = eps.mul(sigma).add_(mu)
+
         # compute KL divergence
-        self.kl_div = torch.sum(sigma**2 + mu**2 - torch.log(sigma) - 1/2)
+         # see Appendix B from VAE paper:    https://arxiv.org/abs/1312.6114
+        self.kl_div = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
         return z # return latent vector
         
 class Decoder(nn.Module):
     """A convolutional decoder """
 
-    def __init__(self, num_latent_dims):
+    def __init__(self, num_latent_dims, num_img_channels):
         super().__init__()
         self.num_latent_dims = num_latent_dims
+        self.num_img_channels = num_img_channels
 
-        self.lin1  = nn.Linear(num_latent_dims, 128*4*4) # Output: 128x4x4
-        self.conv1 = nn.ConvTranspose2d(128, 64, 3, stride=2, padding=1, output_padding=1)  # Output: 64x8x8
-        self.conv2 = nn.ConvTranspose2d(64,  32, 3, stride=2, padding=1, output_padding=1)  # Output: 32x16x16
-        self.conv3 = nn.ConvTranspose2d(32,   1, 3, stride=2, padding=1, output_padding=1)  # Output: 1x32x32
+        # Output: 64x4x4
+        self.lin1  = nn.Linear(num_latent_dims, 64*4*4) 
+        # Output: 32x8x8
+        self.conv1 = nn.ConvTranspose2d(64, 32,               3, stride=2, padding=1, output_padding=1)  
+        # Output: 16x16x16
+        self.conv2 = nn.ConvTranspose2d(32,  16,               3, stride=2, padding=1, output_padding=1)  
+        # Output: #img_channelsx32x32
+        self.conv3 = nn.ConvTranspose2d(16,  num_img_channels, 3, stride=2, padding=1, output_padding=1)  
         
 
     def forward(self, z):
         # unflatten the latent vector
         z = self.lin1(z)
-        z = z.view(-1, 128, 4, 4)
+        z = z.view(-1, 64, 4, 4)
         z = F.leaky_relu(self.conv1(z))
         z = F.leaky_relu(self.conv2(z))
-        z = F.sigmoid(self.conv3(z)) 
+        z = F.sigmoid(self.conv3(z)) # sigmoid to ensure pixel values are in [0,1]
         return z
         
 
@@ -90,11 +104,12 @@ class Decoder(nn.Module):
 class VAE(nn.Module):
     """A convolutional Variational Autoencoder """
 
-    def __init__(self, num_latent_dims, device):
+    def __init__(self, num_latent_dims, num_img_channels, device):
         super().__init__()
         self.num_latent_dims = num_latent_dims
-        self.encoder = Encoder(num_latent_dims, device).to(device)
-        self.decoder = Decoder(num_latent_dims).to(device)
+        self.num_img_channels = num_img_channels
+        self.encoder = Encoder(num_latent_dims, num_img_channels, device)
+        self.decoder = Decoder(num_latent_dims, num_img_channels)
         self.kl_div  = 0
 
     # forward pass of the data "x"
@@ -132,6 +147,6 @@ def vae_loss_fn(x, x_recon, kl_div):
 
     # Total loss
     loss = recon_loss + kl_div
-    #print(f"Loss: {loss.item():.2f} | Recon loss: {recon_loss.item():.2f} | KL div: {kl_div.item():.2f}", end="\r", flush=True)
+    print(f"Loss: {loss.item():.2f} | Recon loss: {recon_loss.item():.2f} | KL div: {kl_div.item():.2f}", end="\r", flush=True)
     return loss
 

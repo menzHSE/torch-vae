@@ -170,3 +170,4 @@ recon_img
 torch-mnist-vae.code-workspace
 reconstructions
 .DS_Store
+torch-vae.code-workspace

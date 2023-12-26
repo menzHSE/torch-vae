@@ -12,63 +12,24 @@ from torchinfo import summary
 import dataset
 import model
 import device
+import utils
 
 from PIL import Image
 
-def ensure_folder_exists(img_path):
-    # Extract the directory path from the file path
-    dir_path = os.path.dirname(img_path)
-
-    # Check if the directory path is not empty
-    if dir_path:
-        # Check if the directory exists, and create it if it does not
-        if not os.path.exists(dir_path):
-            os.makedirs(dir_path, exist_ok=True)
-
-    return dir_path  # Optionally return the directory path
-
-def save_image(img1, img2, fname):
-    # Convert PyTorch tensors to numpy arrays and scale to 0-255
-    img1_data = (img1.detach().cpu().numpy() * 255).astype(np.uint8)
-    img2_data = (img2.detach().cpu().numpy() * 255).astype(np.uint8)
-
-    # Reshape if the images have a channel dimension
-    if img1_data.ndim == 3 and img1_data.shape[0] == 1:  # Grayscale image
-        img1_data = img1_data.squeeze(0)  # remove channel dimension
-    elif img1_data.ndim == 3 and img1_data.shape[0] == 3:  # Color image
-        img1_data = img1_data.transpose(1, 2, 0)  # C, H, W to H, W, C
-
-    if img2_data.ndim == 3 and img2_data.shape[0] == 1:  # Grayscale image
-        img2_data = img2_data.squeeze(0)  # remove channel dimension
-    elif img2_data.ndim == 3 and img2_data.shape[0] == 3:  # Color image
-        img2_data = img2_data.transpose(1, 2, 0)  # C, H, W to H, W, C
-
-    # Convert numpy arrays to Pillow images
-    pimg1 = Image.fromarray(img1_data)
-    pimg2 = Image.fromarray(img2_data)
-
-    # Concatenate images horizontally
-    total_width = pimg1.width + pimg2.width
-    max_height = max(pimg1.height, pimg2.height)
-    combined_img = Image.new('RGB', (total_width, max_height))
-
-    # Paste the images side by side
-    combined_img.paste(pimg1, (0, 0))
-    combined_img.paste(pimg2, (pimg1.width, 0))
-
-    # Save the combined image
-    combined_img.save(fname)
 
 def reconstruct(device, model_fname, dataset_name, num_latent_dims):
        
     # Load the training and test data
     batch_size = 32
-    # get the data
-    _, test_loader, _ = dataset.mnist(batch_size)
 
+    # Image size
+    img_size = (32, 32)
+
+    # get the data
+    _, test_loader, _ , num_img_channels = dataset.get_loaders(dataset_name, img_size, batch_size)
 
     # Load the model
-    vae = model.VAE(num_latent_dims, device=device)
+    vae = model.VAE(num_latent_dims, num_img_channels, device=device)
     vae.load(model_fname)
     print(f"Loaded model with {num_latent_dims} latent dims from {model_fname}")
 
@@ -78,8 +39,8 @@ def reconstruct(device, model_fname, dataset_name, num_latent_dims):
     # loop over data and reconstruct
     with torch.no_grad():
         img_count = 0
-        img_path = f"./reconstructions/reconstruct_{num_latent_dims:05d}_latent_dims/img_"
-        ensure_folder_exists(img_path)
+        img_path = f"./reconstructions/{dataset_name}/{num_latent_dims:04d}_latent_dims/img_"
+        utils.ensure_folder_exists(img_path)
         
         for i, data in enumerate(test_loader, 0):        
                 # get the testing data and push the data to the device we are using       
@@ -90,11 +51,17 @@ def reconstruct(device, model_fname, dataset_name, num_latent_dims):
 
                 # save the images
                 for j in range(images.shape[0]):
+                    img1 = images[j]
+                    img2 = images_recon[j]
+
+                     # Convert PyTorch tensors to numpy arrays and scale to 0-255
+                    img1_data = (img1.detach().cpu().numpy() * 255).astype(np.uint8)
+                    img2_data = (img2.detach().cpu().numpy() * 255).astype(np.uint8)
+
                      # filenames for image and reconstructed image
-
                     img_fname = f"{img_path}{(img_count+j):08d}.png"
-                    save_image(images[j],  images_recon[j], img_fname)
-
+                    utils.combine_and_save_image(img1_data, img2_data, img_fname)
+                 
                 
                 # print progress
                 print(f"Reconstructed {img_count+images.shape[0]} images", end="\r", flush=True)
@@ -108,8 +75,8 @@ if __name__ == "__main__":
 
     parser.add_argument("--cpu", action="store_true", help="Use CPU instead of GPU (cuda/mps) acceleration")     
     parser.add_argument('--model', type=str, required=True, help='Model filename *.pth')
-    parser.add_argument("--dataset", type=str, choices=['mnist'], default='mnist', 
-                        help="Select the dataset to use (mnist)")
+    parser.add_argument("--dataset", type=str, choices=['mnist', 'cifar-10', 'cifar-100'], default='mnist', 
+                        help="Select the dataset to use (mnist, cifar-10, cifar-100)")
     parser.add_argument("--latent_dims", type=int, required=True, help="Number of latent dimensions (positive integer)")
 
 
