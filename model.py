@@ -75,7 +75,15 @@ class Encoder(nn.Module):
         # Generate a tensor of random values from a normal distribution
         eps = torch.randn_like(sigma) 
 
-        # Perform the reparametrization step
+        # Perform the reparametrization step ...
+        # This allows us to backpropagate through it, which we could not do, 
+        # if we had just sampled from a normal distribution with mean mu and
+        # standard deviation sigma. The multiplication with sigma and addition
+        # of mu is just a linear transformation of the random values from the
+        # normal distribution. The result is a random value from the distribution
+        # with mean mu and standard deviation sigma. Backpropagation is possible
+        # because the gradients of the random values are just 1 and the gradients
+        # of the linear transformation are just the weights of the linear transformation.
         z = eps.mul(sigma).add_(mu)
 
         # compute KL divergence
