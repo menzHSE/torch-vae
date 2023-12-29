@@ -181,12 +181,17 @@ class VAE(nn.Module):
 
     # forward pass of the data "x"
     def forward(self, x):
-        z = self.encoder(x)
-        x = self.decoder(z)
+        z = self.encode(x)
+        x = self.decode(z)
         self.kl_div = self.encoder.kl_div
         return x
     
- 
+    def encode(self, x):
+        return self.encoder(x)
+    
+    def decode(self, z):
+        return self.decoder(z)
+
     def save(self, fname):
 
         utils.ensure_folder_exists(fname)
