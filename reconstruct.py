@@ -17,7 +17,7 @@ import utils
 from PIL import Image
 
 
-def reconstruct(device, model_fname, dataset_name, num_latent_dims, max_num_filters, rec_testdata):
+def reconstruct(device, model_fname, dataset_name, num_latent_dims, max_num_filters, rec_testdata, outdir):
        
     # Load the training and test data
     batch_size = 32
@@ -46,7 +46,7 @@ def reconstruct(device, model_fname, dataset_name, num_latent_dims, max_num_filt
     # loop over data and reconstruct
     with torch.no_grad():
         img_count = 0
-        img_path = f"./reconstructions/{dataset_name}_{suffix}/{num_latent_dims:04d}_latent_dims/img_"
+        img_path = f"./{outdir}/{dataset_name}_{suffix}/{num_latent_dims:04d}_latent_dims/img_"
         utils.ensure_folder_exists(img_path)
         
         for i, data in enumerate(data_loader, 0):        
@@ -87,7 +87,8 @@ if __name__ == "__main__":
                         help="Select the dataset to use (mnist, cifar-10, cifar-100, celeb-a)") 
     parser.add_argument("--latent_dims", type=int, required=True, help="Number of latent dimensions (positive integer)")
     parser.add_argument("--max_filters", type=int, default=128, help="Maximum number of filters in the convolutional layers")
-    
+    parser.add_argument('--outdir', type=str, required=True, help='Output directory for the generated samples')
+   
 
 
     args = parser.parse_args()
@@ -104,4 +105,4 @@ if __name__ == "__main__":
     else:
         print("Reconstructing test data")
 
-    reconstruct(dev, args.model, args.dataset, args.latent_dims, args.max_filters, args.rec_testdata)
+    reconstruct(dev, args.model, args.dataset, args.latent_dims, args.max_filters, args.rec_testdata, args.outdir)
