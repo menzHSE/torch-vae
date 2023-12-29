@@ -17,7 +17,7 @@ import utils
 from PIL import Image
 
 
-def reconstruct(device, model_fname, dataset_name, num_latent_dims, rec_testdata):
+def reconstruct(device, model_fname, dataset_name, num_latent_dims, max_num_filters, rec_testdata):
        
     # Load the training and test data
     batch_size = 32
@@ -36,7 +36,7 @@ def reconstruct(device, model_fname, dataset_name, num_latent_dims, rec_testdata
         suffix = "train"
 
     # Load the model
-    vae = model.VAE(num_latent_dims, num_img_channels, device=device)
+    vae = model.VAE(num_latent_dims, num_img_channels, max_num_filters, device=device)
     vae.load(model_fname)
     print(f"Loaded model with {num_latent_dims} latent dims from {model_fname}")
 
@@ -86,6 +86,8 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", type=str, choices=['mnist', 'cifar-10', 'cifar-100', 'celeb-a'], default='mnist', 
                         help="Select the dataset to use (mnist, cifar-10, cifar-100, celeb-a)") 
     parser.add_argument("--latent_dims", type=int, required=True, help="Number of latent dimensions (positive integer)")
+    parser.add_argument("--max_filters", type=int, default=128, help="Maximum number of filters in the convolutional layers")
+    
 
 
     args = parser.parse_args()
@@ -102,4 +104,4 @@ if __name__ == "__main__":
     else:
         print("Reconstructing test data")
 
-    reconstruct(dev, args.model, args.dataset, args.latent_dims, args.rec_testdata)
+    reconstruct(dev, args.model, args.dataset, args.latent_dims, args.max_filters, args.rec_testdata)

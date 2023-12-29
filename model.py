@@ -1,5 +1,5 @@
 # Markus Enzweiler - markus.enzweiler@hs-esslingen.de
-import os
+import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -23,31 +23,45 @@ class Encoder(nn.Module):
     between the two distributions as this auxiliary loss.     
     """
 
-    def __init__(self, num_latent_dims, num_img_channels, device):
+    def __init__(self, num_latent_dims, num_img_channels, max_num_filters, device):
         super().__init__()
         self.num_latent_dims = num_latent_dims
         self.num_img_channels = num_img_channels
+        self.max_num_filters = max_num_filters
         self.device = device
 
         # we assume B x #img_channels x 64 x 64 input 
         # Todo: add input shape attribute to the model to make it more flexible
 
-        # layers
-        # Output: 64x32x32
-        self.conv1 = nn.Conv2d   (num_img_channels,  64, 3, stride=2, padding=1) 
-        # Output: 128x16x16
-        self.conv2 = nn.Conv2d   (64,               128, 3, stride=2, padding=1) 
-        # Output: 256x8x8
-        self.conv3 = nn.Conv2d   (128,              256, 3, stride=2, padding=1) 
+        # C x H x W
+        img_input_shape = (num_img_channels, 64, 64)
+
+        # layers (with max_num_filters=128)
+
+        num_filters_1 = max_num_filters // 4
+        num_filters_2 = max_num_filters // 2
+        num_filters_3 = max_num_filters
+
+        print(f"Encoder: ")
+        print(f"  num_filters_1={num_filters_1}")
+        print(f"  num_filters_2={num_filters_2}")
+        print(f"  num_filters_3={num_filters_3}")
+              
+        # Output: num_filters_1 x 32 x 32
+        self.conv1 = nn.Conv2d   (num_img_channels, num_filters_1, 3, stride=2, padding=1) 
+        # Output: num_filters_2 x 16 x 16
+        self.conv2 = nn.Conv2d   (num_filters_1,    num_filters_2, 3, stride=2, padding=1) 
+        # Output: num_filters_3 x 8 x 8
+        self.conv3 = nn.Conv2d   (num_filters_2,    num_filters_3, 3, stride=2, padding=1) 
         
         # Shortcuts
-        self.shortcut2 = nn.Conv2d(64,  128, 1, stride=2, padding=0)
-        self.shortcut3 = nn.Conv2d(128, 256, 1, stride=2, padding=0)
+        self.shortcut2 = nn.Conv2d(num_filters_1,   num_filters_2, 1, stride=2, padding=0)
+        self.shortcut3 = nn.Conv2d(num_filters_2,   num_filters_3, 1, stride=2, padding=0)
 
         # Batch Normalizations
-        self.bn1 = nn.BatchNorm2d(64)
-        self.bn2 = nn.BatchNorm2d(128)
-        self.bn3 = nn.BatchNorm2d(256)
+        self.bn1 = nn.BatchNorm2d(num_filters_1)
+        self.bn2 = nn.BatchNorm2d(num_filters_2)
+        self.bn3 = nn.BatchNorm2d(num_filters_3)
                        
 
         # linear mappings to mean and standard deviation
@@ -56,16 +70,19 @@ class Encoder(nn.Module):
         # standard deviation must be positive and the exp()
         # in forward ensures this. It might also be numerically
         # more stable.
-        self.proj_mu      = nn.Linear(256 * 8 * 8, num_latent_dims)
-        self.proj_log_var = nn.Linear(256 * 8 * 8, num_latent_dims) 
+
+        # divide the last two dimensions by 8 because of the 3 strided convolutions
+        output_shape = [num_filters_3] + [dimension // 8 for dimension in img_input_shape[1:]]
+        flattened_dim = math.prod(output_shape)
+
+        self.proj_mu      = nn.Linear(flattened_dim, num_latent_dims)
+        self.proj_log_var = nn.Linear(flattened_dim, num_latent_dims) 
         
     def forward(self, x):
-
-        # poor man's ResNet -> skip connections
         
-        x =                     F.leaky_relu(self.bn1(self.conv1(x)))
-        x = self.shortcut2(x) + F.leaky_relu(self.bn2(self.conv2(x)))
-        x = self.shortcut3(x) + F.leaky_relu(self.bn3(self.conv3(x)))
+        x = F.leaky_relu(self.bn1(self.conv1(x)))
+        x = F.leaky_relu(self.bn2(self.conv2(x)))
+        x = F.leaky_relu(self.bn3(self.conv3(x)))
         x = torch.flatten(x, 1) # flatten all dimensions except batch
 
         mu     = self.proj_mu(x)
@@ -94,37 +111,57 @@ class Encoder(nn.Module):
 class Decoder(nn.Module):
     """A convolutional decoder """
 
-    def __init__(self, num_latent_dims, num_img_channels):
+    def __init__(self, num_latent_dims, num_img_channels, max_num_filters):
         super().__init__()
         self.num_latent_dims = num_latent_dims
         self.num_img_channels = num_img_channels
+        self.max_num_filters = max_num_filters
+        self.input_shape = None
 
-        # Output: 256x8x8
-        self.lin1  = nn.Linear(num_latent_dims, 256 * 8 * 8) 
-        # Output: 128x16x16
-        self.conv1 = nn.ConvTranspose2d(256,  128,              3, stride=2, padding=1, output_padding=1)  
-        # Output: 64x32x32
-        self.conv2 = nn.ConvTranspose2d(128,  64,               3, stride=2, padding=1, output_padding=1)  
-        # Output: #img_channels x 64x64
-        self.conv3 = nn.ConvTranspose2d( 64,  num_img_channels, 3, stride=2, padding=1, output_padding=1)  
+        # decoder layers
+        num_filters_1 = max_num_filters
+        num_filters_2 = max_num_filters // 2
+        num_filters_3 = max_num_filters // 4
+       
+
+        print(f"Decoder: ")
+        print(f"  num_filters_1={num_filters_1}")
+        print(f"  num_filters_2={num_filters_2}")
+        print(f"  num_filters_3={num_filters_3}")
+
+        # C x H x W 
+        img_output_shape = (num_img_channels, 64, 64)
+
+         # divide the last two dimensions by 8 because of the 3 strided convolutions 
+        self.input_shape = [num_filters_1] + [dimension // 8 for dimension in img_output_shape[1:]]
+        flattened_dim = math.prod(self.input_shape)
+
+        # Output: flattened_dim
+        self.lin1  = nn.Linear(num_latent_dims, flattened_dim) 
+        # Output: num_filters_2 x 16 x 16
+        self.conv1 = nn.ConvTranspose2d(num_filters_1, num_filters_2,     3, stride=2, padding=1, output_padding=1)  
+        # Output: num_filters_1 x 32 x 32 
+        self.conv2 = nn.ConvTranspose2d(num_filters_2, num_filters_3,     3, stride=2, padding=1, output_padding=1)  
+        # Output: #img_channels x 64 x 64
+        self.conv3 = nn.ConvTranspose2d(num_filters_3, num_img_channels,  3, stride=2, padding=1, output_padding=1)  
 
          # Shortcuts
-        self.shortcut1 = nn.ConvTranspose2d(256, 128, 1, stride=2, padding=0, output_padding=1)
-        self.shortcut2 = nn.ConvTranspose2d(128, 64, 1, stride=2, padding=0, output_padding=1)
+        self.shortcut1 = nn.ConvTranspose2d(num_filters_1, num_filters_2, 1, stride=2, padding=0, output_padding=1)
+        self.shortcut2 = nn.ConvTranspose2d(num_filters_2, num_filters_3, 1, stride=2, padding=0, output_padding=1)
 
          # Batch Normalizations
-        self.bn1 = nn.BatchNorm2d(128)
-        self.bn2 = nn.BatchNorm2d(64)
+        self.bn1 = nn.BatchNorm2d(num_filters_2)
+        self.bn2 = nn.BatchNorm2d(num_filters_3)
      
 
     def forward(self, z):
         # unflatten the latent vector
         x = self.lin1(z)
-        x = x.view(-1, 256, 8, 8)
+        x = x.view(-1, self.max_num_filters, self.input_shape[-2], self.input_shape[-1])
         # poor man's ResNet -> skip connections
-        x = self.shortcut1(x) + F.leaky_relu(self.bn1(self.conv1(x)))
-        x = self.shortcut2(x) + F.leaky_relu(self.bn2(self.conv2(x)))
-        x =                     F.sigmoid(            self.conv3(x)) # sigmoid to ensure pixel values are in [0,1]
+        x = F.leaky_relu(self.bn1(self.conv1(x)))
+        x = F.leaky_relu(self.bn2(self.conv2(x)))
+        x = F.sigmoid(            self.conv3(x)) # sigmoid to ensure pixel values are in [0,1]
         return x
         
 
@@ -132,13 +169,14 @@ class Decoder(nn.Module):
 class VAE(nn.Module):
     """A convolutional Variational Autoencoder """
 
-    def __init__(self, num_latent_dims, num_img_channels, device):
+    def __init__(self, num_latent_dims, num_img_channels, max_num_filters, device):
         super().__init__()
         self.num_latent_dims = num_latent_dims
         self.num_img_channels = num_img_channels
+        self.max_num_filters = max_num_filters
         self.device=device
-        self.encoder = Encoder(num_latent_dims, num_img_channels, device)
-        self.decoder = Decoder(num_latent_dims, num_img_channels)
+        self.encoder = Encoder(num_latent_dims, num_img_channels, max_num_filters, device)
+        self.decoder = Decoder(num_latent_dims, num_img_channels, max_num_filters)
         self.kl_div  = 0
 
     # forward pass of the data "x"
