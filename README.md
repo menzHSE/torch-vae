@@ -10,7 +10,7 @@ See https://github.com/menzHSE/cv-ml-lecture-notebooks for interactive Jupyter n
 
 ## Variational Autoencoder Implementation Overview
 
-Good overviews of variational autoencoders are given in https://arxiv.org/abs/1906.02691 and https://arxiv.org/abs/1312.6114.
+Good overviews of variational autoencoders are provided in [arXiv:1906.02691](https://arxiv.org/abs/1906.02691) and [arXiv:1312.6114](https://arxiv.org/abs/1312.6114).
 
 In our implementation, the input image is not directly mapped to a single latent vector. Instead, it's transformed into a probability distribution within the latent space, from which we sample a latent vector for reconstruction. The process involves:
 
@@ -21,16 +21,19 @@ In our implementation, the input image is not directly mapped to a single latent
    - These vectors define a normal distribution in the latent space.
 
 2. **Auxiliary Loss for Distribution Shape**: 
-   - We ensure the latent space distribution resembles a multivariate normal distribution.
-   - An auxiliary loss, the Kullback-Leibler (KL) divergence between the mapped distribution and a standard normal distribution, is used.
+   - We ensure the latent space distribution resembles a zero-mean unit-variance Gaussian distribution (standard normal distribution).
+   - An auxiliary loss, the Kullback-Leibler (KL) divergence between the mapped distribution and the standard normal distribution, is used in addition to the standard reconstruction loss
    - This loss guides the training to shape the latent distribution accordingly.
+   - It ensures a well-structured and generalizable latent space for generating new images.
 
 3. **Sampling and Decoding**: 
    - The variational approach allows for sampling from the defined distribution in the latent space.
    - These samples are then used by the decoder to generate new images.
 
-This method provides a probabilistic approach to the traditional autoencoder, enhancing robustness and variety in generated outputs.
-
+4. **Reparametrization Trick**:
+   - This crucial step allows for backpropagation through the sampling process, which wouldn't be possible if we directly sampled from a normal distribution with the mean vector (mu) and standard deviation vector (sigma).
+   - By generating random values from a standard normal distribution and transforming them linearly (multiplication by sigma and addition of mu), we effectively sample from the desired distribution with mean mu and standard deviation sigma.
+   - Backpropagation becomes feasible because the gradients of these random values are simply 1, and the gradients of the linear transformation correspond to the weights of the transformation itself.
 
 
 ## Requirements
