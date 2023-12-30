@@ -35,6 +35,9 @@ def reconstruct(device, model_fname, dataset_name, num_latent_dims, max_num_filt
     # push the model to the device we are using
     vae.to(device)
 
+    # set model to eval mode
+    vae.eval()
+
     # loop over data and reconstruct
     with torch.no_grad():
         img_count = 0

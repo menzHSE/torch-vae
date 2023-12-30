@@ -22,6 +22,9 @@ def generate(device, model_fname, num_latent_dims, num_img_channels, max_num_fil
     # push the model to the device we are using
     vae.to(device)
 
+    # set model to eval mode
+    vae.eval()
+
     # generate samples
     with torch.no_grad():
 
