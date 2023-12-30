@@ -1,4 +1,4 @@
-# torch-vae
+# torch-vae - Convolutional Variational Autoencoders
 
 ## About
 
