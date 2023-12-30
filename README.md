@@ -16,21 +16,12 @@ A good overview of variational autoencoders is given in https://arxiv.org/abs/19
 
 See `requirements.txt`
 
-## TODO
-MNIST lat 2
-- Distribution of training data in latent space (colored by class labels)
-- Plot latent space reconstructions see Mail github initial repo
-- Random samples and reconstructions
-- Interpolations?
-
-Celeb-A
-- Random samples and reconstructions
 
 ## Usage
 
 ### Model Training
 
-Pretrained models for all datasets are available in ```models/pretrained```. The models carry information of the maximum number of filters in the conv layers (```--max_filters```) and the number of latent dimensions (```--latent_dims```) in their filename. To train a VAE model use ```python train.py```. 
+Pretrained models for all datasets are available in the ```models``` directory. The models carry information of the maximum number of filters in the conv layers (```--max_filters```) and the number of latent dimensions (```--latent_dims```) in their filename. These models use three conv layers with 32/64/128 features (and corresponding transposed conv layers in the decoder) and 64 latent dimensions. To train a VAE model use ```python train.py```. 
 
 ```
 python train.py  -h
