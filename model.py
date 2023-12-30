@@ -13,7 +13,7 @@ class Encoder(nn.Module):
     A convolutional variational encoder. We do not map the input image 
     deterministically to a latent vector. Instead, we map the input to 
     a probability distribution in latent space and sample a latent vector
-    fron that distribution. In this example,we linearly map the input
+    fron that distribution. In this example, we linearly map the input
     image to a mean vector and a vector of standard deviations that 
     parameterize a normal distribution.
 

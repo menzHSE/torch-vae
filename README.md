@@ -1,10 +1,36 @@
 # torch-vae
 
+## About
+
 Author: Markus Enzweiler, markus.enzweiler@hs-esslingen.de
 
-Convolutional variational autoencoder (VAE) implementation in PyTorch. Supported datasets include MNIST, CIFAR-10/100 and CelebA. See https://github.com/menzHSE/cv-ml-lecture-notebooks for interactive Jupyter notebooks using this pacakage with additional explanations and visualizations. 
+Convolutional variational autoencoder (VAE) implementation in PyTorch. Supported datasets include MNIST, CIFAR-10/100 and CelebA. 
 
-A good overview of variational autoencoders is given in https://arxiv.org/abs/1906.02691 and https://arxiv.org/abs/1312.6114.
+See https://github.com/menzHSE/cv-ml-lecture-notebooks for interactive Jupyter notebooks using this package with additional explanations and visualizations. 
+
+## Variational Autoencoder Implementation Overview
+
+Good overviews of variational autoencoders are given in https://arxiv.org/abs/1906.02691 and https://arxiv.org/abs/1312.6114.
+
+In our implementation, the input image is not directly mapped to a single latent vector. Instead, it's transformed into a probability distribution within the latent space, from which we sample a latent vector for reconstruction. The process involves:
+
+1. **Encoding to Probability Distribution**: 
+   - The input image is linearly mapped to two vectors: 
+     - A **mean vector**.
+     - A **standard deviation vector**.
+   - These vectors define a normal distribution in the latent space.
+
+2. **Auxiliary Loss for Distribution Shape**: 
+   - We ensure the latent space distribution resembles a multivariate normal distribution.
+   - An auxiliary loss, the Kullback-Leibler (KL) divergence between the mapped distribution and a standard normal distribution, is used.
+   - This loss guides the training to shape the latent distribution accordingly.
+
+3. **Sampling and Decoding**: 
+   - The variational approach allows for sampling from the defined distribution in the latent space.
+   - These samples are then used by the decoder to generate new images.
+
+This method provides a probabilistic approach to the traditional autoencoder, enhancing robustness and variety in generated outputs.
+
 
 
 ## Requirements
@@ -90,7 +116,7 @@ optional arguments:
 
 ### Generating Samples from the Model
 
-The variational autoencoders are trained in a way that the distribution in latent space resembles a normal distribution (there is a special loss term for that). To generate samples from the variational autoencoder, we can sample a random normally distributed latent vector and have the decoder generate an image from that. Use ```python generate.py``` to generate random samples. 
+The variational autoencoders are trained in a way that the distribution in latent space resembles a normal distribution (see above). To generate samples from the variational autoencoder, we can sample a random normally distributed latent vector and have the decoder generate an image from that. Use ```python generate.py``` to generate random samples. 
 
 
 ``` 
