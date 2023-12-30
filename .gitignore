@@ -159,16 +159,8 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 data
-mlx-cifar-10-cnn.code-workspace
-model_???.pth
-*.pth
-data
-torch-cifar-10-cnn.code-workspace
-models
-orig_img
-recon_img
-torch-mnist-vae.code-workspace
 reconstructions
 .DS_Store
-torch-vae.code-workspace
+*.code-workspace
 samples
+docs/*.key

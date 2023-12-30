@@ -42,10 +42,10 @@ class Encoder(nn.Module):
         num_filters_2 = max_num_filters // 2
         num_filters_3 = max_num_filters
 
-        print(f"Encoder: ")
-        print(f"  num_filters_1={num_filters_1}")
-        print(f"  num_filters_2={num_filters_2}")
-        print(f"  num_filters_3={num_filters_3}")
+        #print(f"Encoder: ")
+        #print(f"  num_filters_1={num_filters_1}")
+        #print(f"  num_filters_2={num_filters_2}")
+        #print(f"  num_filters_3={num_filters_3}")
               
         # Output: num_filters_1 x 32 x 32
         self.conv1 = nn.Conv2d   (num_img_channels, num_filters_1, 3, stride=2, padding=1) 
@@ -122,12 +122,11 @@ class Decoder(nn.Module):
         num_filters_1 = max_num_filters
         num_filters_2 = max_num_filters // 2
         num_filters_3 = max_num_filters // 4
-       
 
-        print(f"Decoder: ")
-        print(f"  num_filters_1={num_filters_1}")
-        print(f"  num_filters_2={num_filters_2}")
-        print(f"  num_filters_3={num_filters_3}")
+        #print(f"Decoder: ")
+        #print(f"  num_filters_1={num_filters_1}")
+        #print(f"  num_filters_2={num_filters_2}")
+        #print(f"  num_filters_3={num_filters_3}")
 
         # C x H x W 
         img_output_shape = (num_img_channels, 64, 64)

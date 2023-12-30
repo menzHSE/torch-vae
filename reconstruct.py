@@ -78,7 +78,7 @@ def reconstruct(device, model_fname, dataset_name, num_latent_dims, max_num_filt
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser("Test a VAE with PyTorch.")
+    parser = argparse.ArgumentParser("Reconstruct data samples using a VAE with PyTorch.")
 
     parser.add_argument("--cpu", action="store_true", help="Use CPU instead of GPU (cuda/mps) acceleration")     
     parser.add_argument('--model', type=str, required=True, help='Model filename *.pth')
