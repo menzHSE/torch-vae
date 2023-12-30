@@ -82,15 +82,18 @@ optional arguments:
 
 
 #### Examples
+
 **Reconstructing MNIST**
 
 ```python reconstruct.py --model=models/pretrained/mnist/vae_filters_0128_dims_0064.pth  --dataset=mnist  --latent_dims=64 --outdir=reconstructions/mnist```
 
-
+![MNIST Reconstructions](docs/images/rec_mnist.jpg)
 
 
 **Reconstructing CelebA**
+
 ```python reconstruct.py --model=models/pretrained/celeb-a/vae_filters_0128_dims_0064.pth  --dataset=celeb-a --latent_dims=64 --outdir=reconstructions/celeb-a```
 
+![CelebA Reconstructions](docs/images/rec_celeb-a.jpg)
 
 
