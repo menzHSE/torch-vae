@@ -43,7 +43,9 @@ In our implementation, the input image is not directly mapped to a single latent
 * numpy
 * Pillow
 
-See `requirements.txt`
+See [requirements.txt](requirements.txt). 
+
+```pip install -r requirements.txt```
 
 
 ## Usage
