@@ -8,7 +8,6 @@ import numpy as np
 import logging
 
 import torch
-import torch.nn as nn
 import torch.optim as optim
 from torchinfo import summary
 

@@ -1,3 +1,5 @@
+# Markus Enzweiler - markus.enzweiler@hs-esslingen.de
+
 import os
 import numpy as np
 from PIL import Image

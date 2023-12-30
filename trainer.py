@@ -1,7 +1,8 @@
+# Markus Enzweiler - markus.enzweiler@hs-esslingen.de
+
 import time
 import datetime
 import logging
-import torch
 import sys
 import numpy as np
 
@@ -105,8 +106,7 @@ class Trainer:
             f"time: {time_taken:6.3f}s | "
             f"trainLoss: {train_loss:6.3f} | "
         )
-
-       
+     
 
         log_message += f"throughput: {throughput:10.3f} img/s |"
 

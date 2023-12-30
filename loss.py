@@ -1,6 +1,6 @@
+# Markus Enzweiler - markus.enzweiler@hs-esslingen.de
+
 import torch.nn.functional as F
-
-
 
 def mse_kl_loss(x, x_recon, kl_div, alpha_kl_div_loss=1.0):
     """The loss function for the VAE. It is a combination of the reconstruction loss

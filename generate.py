@@ -2,19 +2,12 @@
 
 import argparse
 import numpy as np
-
-
 import torch
-import torch.nn as nn
-import torch.optim as optim
 import torchvision
 
 import model
 import device
 import utils
-
-from PIL import Image
-
 
 def generate(device, model_fname, num_latent_dims, num_img_channels, max_num_filters, num_samples, outdir):
 
@@ -53,7 +46,7 @@ def generate(device, model_fname, num_latent_dims, num_img_channels, max_num_fil
 
             # get img data
             img_data = (img.detach().cpu().numpy() * 255).astype(np.uint8).squeeze(0)
-            
+
             # save the image
             utils.save_image(img_data, img_path)
         

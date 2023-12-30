@@ -2,20 +2,12 @@
 
 import argparse
 import numpy as np
-import os
-
 import torch
-import torch.nn as nn
-import torch.optim as optim
-from torchinfo import summary
 
 import dataset
 import model
 import device
 import utils
-
-from PIL import Image
-
 
 def reconstruct(device, model_fname, dataset_name, num_latent_dims, max_num_filters, rec_testdata, outdir):
        
