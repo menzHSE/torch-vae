@@ -64,7 +64,8 @@ class Encoder(nn.Module):
                        
 
         # linear mappings to mean and standard deviation
-        # std-dev is directly outputted as but rather as a 
+        
+        # std-dev is not directly outputted but rather as a 
         # vector of log-variances. This is because the
         # standard deviation must be positive and the exp()
         # in forward ensures this. It might also be numerically
