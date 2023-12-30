@@ -47,6 +47,11 @@ See [requirements.txt](requirements.txt).
 
 ```pip install -r requirements.txt```
 
+## Data
+
+Supported datasets include MNIST, CIFAR-10/100 and CelebA which are automatically downloaded using torchvision. In case of CelebA, there is a [known issue](https://github.com/pytorch/vision/issues/1920) with limited quota on the Google drive where CelebA is hosted. 
+
+If you are getting a download error due to exceeded quota, please download CelebA manually from https://graal.ift.ulaval.ca/public/celeba/ and place all downloaded files in the ```data/celeba``` directory. No need to unzip anything. 
 
 ## Usage
 
