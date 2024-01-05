@@ -78,8 +78,8 @@ if __name__ == "__main__":
     parser.add_argument("--cpu", action="store_true", help="Use CPU instead of GPU (cuda/mps) acceleration")     
     parser.add_argument('--model', type=str, required=True, help='Model filename *.pth')
     parser.add_argument('--rec_testdata', action="store_true", help="Reconstruct test split instead of training split")  
-    parser.add_argument("--dataset", type=str, choices=['mnist', 'cifar-10', 'cifar-100', 'celeb-a'], default='mnist', 
-                        help="Select the dataset to use (mnist, cifar-10, cifar-100, celeb-a)") 
+    parser.add_argument("--dataset", type=str, choices=['mnist', 'fashion-mnist', 'cifar-10', 'cifar-100', 'celeb-a'], default='mnist', 
+                        help="Select the dataset to use (mnist, fashion-mnist, cifar-10, cifar-100, celeb-a)") 
     parser.add_argument("--latent_dims", type=int, required=True, help="Number of latent dimensions (positive integer)")
     parser.add_argument("--max_filters", type=int, default=128, help="Maximum number of filters in the convolutional layers")
     parser.add_argument('--outdir', type=str, required=True, help='Output directory for the generated samples')

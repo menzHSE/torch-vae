@@ -4,7 +4,7 @@
 
 Author: Markus Enzweiler, markus.enzweiler@hs-esslingen.de
 
-Convolutional variational autoencoder (VAE) implementation in PyTorch. Supported datasets include MNIST, CIFAR-10/100 and CelebA. 
+Convolutional variational autoencoder (VAE) implementation in PyTorch. Supported datasets include MNIST, Fashion MNIST, CIFAR-10/100 and CelebA. 
 
 See https://github.com/menzHSE/cv-ml-lecture-notebooks for interactive Jupyter notebooks using this package with additional explanations and visualizations. 
 
@@ -49,7 +49,7 @@ See [requirements.txt](requirements.txt).
 
 ## Data
 
-Supported datasets include MNIST, CIFAR-10/100 and CelebA which are automatically downloaded using torchvision. In case of CelebA, there is a [known issue](https://github.com/pytorch/vision/issues/1920) with limited quota on the Google drive where CelebA is hosted. 
+Supported datasets include MNIST, Fashion MNIST, CIFAR-10/100 and CelebA which are automatically downloaded using torchvision. In case of CelebA, there is a [known issue](https://github.com/pytorch/vision/issues/1920) with limited quota on the Google drive where CelebA is hosted. 
 
 If you are getting a download error due to exceeded quota, please download CelebA manually from https://graal.ift.ulaval.ca/public/celeba/ and place all downloaded files in the ```data/celeba``` directory. No need to unzip anything. 
 
@@ -62,7 +62,7 @@ Pretrained models for all datasets are available in the ```models``` directory. 
 ```
 python train.py  -h
 usage: Train a VAE with PyTorch. [-h] [--cpu] [--seed SEED] [--batchsize BATCHSIZE] [--max_filters MAX_FILTERS]
-                                 [--epochs EPOCHS] [--lr LR] [--dataset {mnist,cifar-10,cifar-100,celeb-a}] --latent_dims
+                                 [--epochs EPOCHS] [--lr LR] [--dataset {mnist,fashion-mnist,cifar-10,cifar-100,celeb-a}] --latent_dims
                                  LATENT_DIMS
 
 optional arguments:
@@ -75,8 +75,8 @@ optional arguments:
                         Maximum number of filters in the convolutional layers
   --epochs EPOCHS       Number of training epochs
   --lr LR               Learning rate
-  --dataset {mnist,cifar-10,cifar-100,celeb-a}
-                        Select the dataset to use (mnist, cifar-10, cifar-100, celeb-a)
+  --dataset {mnist,fashion-mnist,cifar-10,cifar-100,celeb-a}
+                        Select the dataset to use (mnist, fashion-mnist, cifar-10, cifar-100, celeb-a)
   --latent_dims LATENT_DIMS
                         Number of latent dimensions (positive integer)
 ```
@@ -89,17 +89,17 @@ optional arguments:
 Datasets can be reconstructed using ```python reconstruct.py```. Images depicting original and reconstructed data samples are written to the folder specified by ```--outdir```.
 
 ``` 
-python reconstruct.py  -h
-usage: Reconstruct data samples using a VAE with PyTorch. [-h] [--cpu] --model MODEL [--rec_testdata] [--dataset {mnist,cifar-10,cifar-100,celeb-a}]
-                                                          --latent_dims LATENT_DIMS [--max_filters MAX_FILTERS] --outdir OUTDIR
+usage: Reconstruct data samples using a VAE with PyTorch. [-h] [--cpu] --model MODEL [--rec_testdata]
+                                                          [--dataset {mnist,fashion-mnist,cifar-10,cifar-100,celeb-a}] --latent_dims LATENT_DIMS
+                                                          [--max_filters MAX_FILTERS] --outdir OUTDIR
 
 optional arguments:
   -h, --help            show this help message and exit
   --cpu                 Use CPU instead of GPU (cuda/mps) acceleration
   --model MODEL         Model filename *.pth
   --rec_testdata        Reconstruct test split instead of training split
-  --dataset {mnist,cifar-10,cifar-100,celeb-a}
-                        Select the dataset to use (mnist, cifar-10, cifar-100, celeb-a)
+  --dataset {mnist,fashion-mnist,cifar-10,cifar-100,celeb-a}
+                        Select the dataset to use (mnist, fashion-mnist, cifar-10, cifar-100, celeb-a)
   --latent_dims LATENT_DIMS
                         Number of latent dimensions (positive integer)
   --max_filters MAX_FILTERS
@@ -115,6 +115,13 @@ optional arguments:
 ```python reconstruct.py --model=models/mnist/vae_filters_0128_dims_0064.pth  --dataset=mnist  --latent_dims=64 --outdir=reconstructions/mnist```
 
 ![MNIST Reconstructions](docs/images/rec_mnist.jpg)
+
+
+**Reconstructing Fashion MNIST**
+
+```python reconstruct.py --model=models/fashion-mnist/vae_filters_0128_dims_0064.pth  --dataset=fashion-mnist  --latent_dims=64 --outdir=reconstructions/fashion-mnist```
+
+![MNIST Reconstructions](docs/images/rec_fashion_mnist.jpg)
 
 
 **Reconstructing CelebA**
@@ -156,6 +163,13 @@ optional arguments:
 ```python generate.py  --model=models/mnist/vae_filters_0128_dims_0064.pth  --latent_dims=64 --outdir=./samples/mnist --nimg_channels=1 --nsamples=64``` 
 
 ![MNIST Samples](docs/images/samples_mnist.jpg)
+
+
+**Sample from the VAE models trained on Fashion MNIST**
+
+```python generate.py  --model=models/fashion-mnist/vae_filters_0128_dims_0064.pth  --latent_dims=64 --outdir=./samples/fashion-mnist --nimg_channels=1 --nsamples=64``` 
+
+![Fashion MNIST Samples](docs/images/samples_fashion_mnist.jpg)
 
 
 **Sample from the VAE models trained on CelebA**
