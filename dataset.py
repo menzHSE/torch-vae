@@ -12,6 +12,9 @@ def get_loaders(dataset_name, img_size, batch_size, root="./data"):
     if dataset_name == "mnist":
         load_fn = torchvision.datasets.MNIST
         num_img_channels = 1
+    elif dataset_name == "fashion-mnist":
+        load_fn = torchvision.datasets.FashionMNIST
+        num_img_channels = 1
     elif dataset_name == "cifar-10":
         load_fn = torchvision.datasets.CIFAR10
         num_img_channels = 3
@@ -39,7 +42,7 @@ def torchvision_load(dataset_name, batch_size, load_fn, img_size=(32,32), root="
         tr   = load_fn(root=root, split="train", download=True, transform=transform)
         test = load_fn(root=root, split="test",  download=True, transform=transform)
         classes_list = None # could use "identity" attribute of the dataset
-    elif dataset_name in ["cifar-100", "cifar-10", "mnist"]:
+    elif dataset_name in ["cifar-100", "cifar-10", "mnist", "fashion-mnist"]:
         tr   = load_fn(root=root, train=True,   download=True, transform=transform)
         test = load_fn(root=root, train=False,  download=True, transform=transform)
         classes_list = tr.classes
