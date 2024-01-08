@@ -1,10 +1,12 @@
 # Markus Enzweiler - markus.enzweiler@hs-esslingen.de
 
-import time
 import datetime
 import logging
 import sys
+import time
+
 import numpy as np
+
 
 class Trainer:
     """
@@ -26,7 +28,7 @@ class Trainer:
 
     log_level :  The log level to use for logging. Can be one of the following:
         logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL
-        
+
     Usage
     -----
 
@@ -41,24 +43,32 @@ class Trainer:
 
     """
 
-    def __init__(self, model, loss_fn, optimizer, device, fname_save_every_epoch=None, log_level=logging.INFO):
+    def __init__(
+        self,
+        model,
+        loss_fn,
+        optimizer,
+        device,
+        fname_save_every_epoch=None,
+        log_level=logging.INFO,
+    ):
         self.model = model
         self.loss_fn = loss_fn
-        self.optimizer = optimizer  
+        self.optimizer = optimizer
         self.device = device
         self.fname_save_every_epoch = fname_save_every_epoch
         self.train_batch_size = 0
-   
+
         # logging
         self.log_level = log_level
         self.logger = None
         self.logger_stream_handler = None
         self._setup_logger()
-        
+
         # metrics, computed in each epoch
         self.metrics = dict()
         self.metrics["epochTrainLoss"] = []
-     
+
         # timing
         self.metrics["epochStartTime"] = None
         self.metrics["epochEndTime"] = None
@@ -66,16 +76,15 @@ class Trainer:
         self.metrics["trainingEndTime"] = None
         self.metrics["throughput"] = 0.0
 
-
     def _setup_logger(self):
-        logging.basicConfig(stream=sys.stdout, level = self.log_level, force=True)
-        self.logger = logging.getLogger('Trainer')
+        logging.basicConfig(stream=sys.stdout, level=self.log_level, force=True)
+        self.logger = logging.getLogger("Trainer")
 
         self.logger_stream_handler = logging.StreamHandler()
         self.logger_stream_handler.setLevel(self.log_level)
-        formatter = logging.Formatter('%(message)s')
+        formatter = logging.Formatter("%(message)s")
         self.logger_stream_handler.setFormatter(formatter)
-        
+
         self.logger.handlers.clear()
         self.logger.addHandler(self.logger_stream_handler)
         self.logger.propagate = False
@@ -84,16 +93,16 @@ class Trainer:
         fname = f"{name}_{epoch:03d}.pth"
         self.model.save(fname)
 
-
     def _init_metrics(self, num_epochs):
-        self.metrics["epochTrainLoss"    ] = [0.0] * num_epochs
-    
+        self.metrics["epochTrainLoss"] = [0.0] * num_epochs
 
     def _update_metrics(self, epoch, num_train_samples):
         # average loss and accuracy
         if num_train_samples:
-            self.metrics["epochTrainLoss"][epoch]     = self.metrics["epochTrainLoss"][epoch]     / num_train_samples
-     
+            self.metrics["epochTrainLoss"][epoch] = (
+                self.metrics["epochTrainLoss"][epoch] / num_train_samples
+            )
+
     def _log_metrics(self, epoch):
         # log metrics
         self.logger_stream_handler.terminator = ""
@@ -106,13 +115,11 @@ class Trainer:
             f"time: {time_taken:6.3f}s | "
             f"trainLoss: {train_loss:6.3f} | "
         )
-     
 
         log_message += f"throughput: {throughput:10.3f} img/s |"
 
         self.logger.info(log_message)
-        self.logger.info('\n')
-
+        self.logger.info("\n")
 
     def _on_train_begin(self, num_epochs):
         # Push the network model to the device we are using to train
@@ -124,33 +131,34 @@ class Trainer:
         # start time
         self.metrics["trainingStartTime"] = time.monotonic()
 
-
-    def _on_train_end(self, num_epochs):        
+    def _on_train_end(self, num_epochs):
         # end time
         self.metrics["trainingEndTime"] = time.monotonic()
-        timeDelta = datetime.timedelta(seconds=(self.metrics["trainingEndTime"] - self.metrics["trainingStartTime"]))
+        timeDelta = datetime.timedelta(
+            seconds=(
+                self.metrics["trainingEndTime"] - self.metrics["trainingStartTime"]
+            )
+        )
 
         # log
         self.logger_stream_handler.terminator = "\n"
-        self.logger.info(f'Training finished in {str(timeDelta)} hh:mm:ss.ms')
+        self.logger.info(f"Training finished in {str(timeDelta)} hh:mm:ss.ms")
 
-    
     def _on_epoch_begin(self, epoch):
         # start time of epoch
-        self.metrics["epochStartTime"] = time.monotonic()  
+        self.metrics["epochStartTime"] = time.monotonic()
 
         # log info
         self.logger_stream_handler.terminator = " "
-        self.logger.info( f'[Epoch {epoch:3}] : ') 
+        self.logger.info(f"[Epoch {epoch:3}] : ")
 
-
-    def _on_epoch_end(self, epoch, num_train_samples, num_batches):        
+    def _on_epoch_end(self, epoch, num_train_samples, num_batches):
         # end time of epoch
-        self.metrics["epochEndTime"] = time.monotonic()  
+        self.metrics["epochEndTime"] = time.monotonic()
 
         # log info
         self.logger_stream_handler.terminator = "\n"
-        self.logger.info(f' done ({num_batches} batches)') 
+        self.logger.info(f" done ({num_batches} batches)")
 
         # update metrics
         self._update_metrics(epoch, num_train_samples)
@@ -162,10 +170,8 @@ class Trainer:
         if self.fname_save_every_epoch:
             self._save_model(self.fname_save_every_epoch, epoch)
 
-        
-
     def _train_epoch(self, epoch, train_loader):
-         # loop over batches in the dataset
+        # loop over batches in the dataset
         num_batches = 0
 
         # throughput (images per second)
@@ -174,17 +180,16 @@ class Trainer:
         # model in training mode
         self.model.train()
 
-
-        for i, data in enumerate(train_loader, 0):        
+        for i, data in enumerate(train_loader, 0):
             # get the training data : data is a list of [images, labels]
-            # and push the data to the device we are using       
+            # and push the data to the device we are using
             images, labels = data[0].to(self.device), data[1].to(self.device)
 
             # zero the parameter gradients before the next data batch is processed
             self.optimizer.zero_grad()
 
             # start time of batch
-            batch_start_time = time.monotonic()  
+            batch_start_time = time.monotonic()
 
             # forward pass of the batch
             outputs = self.model(images)
@@ -198,19 +203,20 @@ class Trainer:
             # optimize the network parameters
             self.optimizer.step()
 
-             # end time of batch
-            batch_end_time = time.monotonic()  
+            # end time of batch
+            batch_end_time = time.monotonic()
 
             # accumulate train loss
             self.metrics["epochTrainLoss"][epoch] += loss.item() * self.train_batch_size
 
-
             # throughput (images per second)
-            self.metrics["throughput"].append(images.shape[0] / (batch_end_time - batch_start_time))
+            self.metrics["throughput"].append(
+                images.shape[0] / (batch_end_time - batch_start_time)
+            )
 
-            if ((i % 100) == 0):
+            if (i % 100) == 0:
                 self.logger_stream_handler.terminator = ""
-                self.logger.info ('.')
+                self.logger.info(".")
 
             num_batches = num_batches + 1
 
@@ -219,27 +225,23 @@ class Trainer:
 
         return num_batches
 
-
     def _test_epoch(self, epoch, val_loader):
         pass
 
-                   
-
     def train(self, train_loader, val_loader, num_epochs):
-        # main training method    
+        # main training method
 
         # check training and validation data
         if not (train_loader and len(train_loader) > 0):
-            msg = 'No training data available'
+            msg = "No training data available"
             self.logger.error(msg)
             raise Exception(msg)
 
         # number of train and validation samples
-        num_train_samples = (len(train_loader.dataset) if train_loader else 0)
-        
+        num_train_samples = len(train_loader.dataset) if train_loader else 0
+
         # batch sizes of train and validation loader
-        self.train_batch_size = (train_loader.batch_size if train_loader else 0)
-        
+        self.train_batch_size = train_loader.batch_size if train_loader else 0
 
         # ------ Main training loop ------
 
@@ -247,8 +249,7 @@ class Trainer:
         self._on_train_begin(num_epochs)
 
         # loop over the dataset in each epoch
-        for epoch in range(num_epochs):           
-
+        for epoch in range(num_epochs):
             # do some stuff at the beginning of each epoch
             self._on_epoch_begin(epoch)
 
@@ -258,6 +259,5 @@ class Trainer:
             # do some stuff at the end of each epoch
             self._on_epoch_end(epoch, num_train_samples, num_batches)
 
-         # do some stuff at the end of the training
+        # do some stuff at the end of the training
         self._on_train_end(num_epochs)
-
