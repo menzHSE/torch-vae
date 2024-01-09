@@ -60,12 +60,13 @@ If you are getting a download error due to exceeded quota, please download Celeb
 Pretrained models for all datasets are available in the ```models``` directory. The models carry information of the maximum number of filters in the conv layers (```--max_filters```) and the number of latent dimensions (```--latent_dims```) in their filename. These models use three conv layers with 32/64/128 features (and corresponding transposed conv layers in the decoder) and 64 latent dimensions. To train a VAE model use ```python train.py```. 
 
 ```
-python train.py  -h
-usage: Train a VAE with PyTorch. [-h] [--cpu] [--seed SEED] [--batchsize BATCHSIZE] [--max_filters MAX_FILTERS]
-                                 [--epochs EPOCHS] [--lr LR] [--dataset {mnist,fashion-mnist,cifar-10,cifar-100,celeb-a}] --latent_dims
-                                 LATENT_DIMS
+$ python train.py -h
+usage: train.py [-h] [--cpu] [--seed SEED] [--batchsize BATCHSIZE] [--max_filters MAX_FILTERS] [--epochs EPOCHS]
+                [--lr LR] [--dataset {mnist,fashion-mnist,cifar-10,cifar-100,celeb-a}] --latent_dims LATENT_DIMS
 
-optional arguments:
+Train a VAE with PyTorch.
+
+options:
   -h, --help            show this help message and exit
   --cpu                 Use CPU instead of GPU (cuda/mps) acceleration
   --seed SEED           Random seed
@@ -89,11 +90,14 @@ optional arguments:
 Datasets can be reconstructed using ```python reconstruct.py```. Images depicting original and reconstructed data samples are written to the folder specified by ```--outdir```.
 
 ``` 
-usage: Reconstruct data samples using a VAE with PyTorch. [-h] [--cpu] --model MODEL [--rec_testdata]
-                                                          [--dataset {mnist,fashion-mnist,cifar-10,cifar-100,celeb-a}] --latent_dims LATENT_DIMS
-                                                          [--max_filters MAX_FILTERS] --outdir OUTDIR
+$ python reconstruct.py -h
+usage: reconstruct.py [-h] [--cpu] --model MODEL [--rec_testdata]
+                      [--dataset {mnist,fashion-mnist,cifar-10,cifar-100,celeb-a}] --latent_dims LATENT_DIMS
+                      [--max_filters MAX_FILTERS] --outdir OUTDIR
 
-optional arguments:
+Reconstruct data samples using a VAE with PyTorch.
+
+options:
   -h, --help            show this help message and exit
   --cpu                 Use CPU instead of GPU (cuda/mps) acceleration
   --model MODEL         Model filename *.pth
@@ -137,11 +141,13 @@ The variational autoencoders are trained in a way that the distribution in laten
 
 
 ``` 
-python generate.py -h
-usage: Generate samples from a VAE with PyTorch. [-h] [--cpu] [--seed SEED] --model MODEL --latent_dims LATENT_DIMS [--max_filters MAX_FILTERS]
-                                                 [--nsamples NSAMPLES] --outdir OUTDIR [--nimg_channels NIMG_CHANNELS]
+$ python generate.py -h
+usage: generate.py [-h] [--cpu] [--seed SEED] --model MODEL --latent_dims LATENT_DIMS [--max_filters MAX_FILTERS]
+                   [--nsamples NSAMPLES] --outdir OUTDIR [--nimg_channels NIMG_CHANNELS]
 
-optional arguments:
+Generate samples from a VAE with PyTorch.
+
+options:
   -h, --help            show this help message and exit
   --cpu                 Use CPU instead of GPU (cuda/mps) acceleration
   --seed SEED           Random seed

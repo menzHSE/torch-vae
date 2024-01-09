@@ -90,7 +90,7 @@ def reconstruct(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        "Reconstruct data samples using a VAE with PyTorch."
+        description="Reconstruct data samples using a VAE with PyTorch."
     )
 
     parser.add_argument(

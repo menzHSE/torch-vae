@@ -63,7 +63,7 @@ def train(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser("Train a VAE with PyTorch.")
+    parser = argparse.ArgumentParser(description="Train a VAE with PyTorch.")
 
     parser.add_argument(
         "--cpu",

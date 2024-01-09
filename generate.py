@@ -67,7 +67,9 @@ def generate(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser("Generate samples from a VAE with PyTorch.")
+    parser = argparse.ArgumentParser(
+        description="Generate samples from a VAE with PyTorch."
+    )
 
     parser.add_argument(
         "--cpu",
